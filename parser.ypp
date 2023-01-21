@@ -1,0 +1,151 @@
+%{ 
+	#include <iostream>	
+	#include <stdlib.h>
+	#include <stdio.h>
+    #include <string>
+
+    #include "global_symbs.hpp"         // all actions and the DS
+    #include "hw3_output.hpp"
+
+    using namespace output;
+	int yylex();
+	extern int yylineno;
+	void yyerror(const char*);
+    GlobalSymbs DS; // this is our DS that contain all the symbols in the code
+    
+%}
+
+//
+%right ASSIGN
+%left OR
+%left AND
+%left RELATIONAL
+%left ADDITIVE
+%left MULTIPLICATIVE
+%right NOT
+%left LPAREN
+%left RPAREN
+%nonassoc VOID
+%nonassoc INT
+%nonassoc BYTE
+%nonassoc B
+%nonassoc BOOL
+%nonassoc TRUE
+%nonassoc FALSE
+%nonassoc RETURN
+%nonassoc IF
+%nonassoc ELSE
+%nonassoc WHILE
+%nonassoc BREAK
+%nonassoc CONTINUE
+%nonassoc SC
+%nonassoc COMMA
+%nonassoc LBRACE
+%nonassoc RBRACE
+%nonassoc ID
+%nonassoc NUM
+%nonassoc STRING
+
+
+
+%%
+
+
+Prog:               OpenScope AddPrints Funcs CloseScope              			        {DS.printFunctions();}//check if main function exists, print scope
+;
+
+AddPrints:          /* epsilon */                                               {    Symbol new_s("value", TYPE_STRING, false,-1);
+                                                                                     Symbol new_s2("value", TYPE_INT, false,-1);
+                                                                                     DS.current_function_parameters.emplace_back(new_s);DS.addFunction("print", TYPE_VOID);DS.clearFormals();
+                                                                                     DS.current_function_parameters.emplace_back(new_s2);DS.addFunction("printi",TYPE_VOID);DS.clearFormals();}
+;
+Funcs:              FuncDecl Funcs    										    {}
+                    | /* epsilon */       										{}
+;
+
+FuncDecl:           RetType ID OpenScope LPAREN Formals RPAREN LBRACE Statements CloseScope RBRACE   {DS.addFunction(($2->value), DS.current_function_type);DS.clearFormals();}//check if function with ID exists?
+;
+OpenScope:           /* epsilon */                                              {DS.openScope();}
+;
+CloseScope:          /* epsilon */                                              {output::endScope();DS.closeScope();}
+;
+RetType:            Type                										{DS.currentFunctionType($1->type);}
+                    | VOID             										    {DS.currentFunctionType(TYPE_VOID);}
+;
+
+Formals:            FormalsList       										    {$$ = new Formals((FormalsList*)$1);}//make sure to save all formals with negative offsets
+                    | /* epsilon */       										{$$ = new Formals();}
+;
+
+FormalsList:        FormalDecl          										{$$ = new FormalsList((FormalDecl*)$1);} //save variables at negative offsets.
+                    | FormalDecl COMMA FormalsList  							{$$ = new FormalsList((FormalDecl*)$1, (FormalsList*)$3);}
+;
+
+FormalDecl:         Type ID         				 							{DS.addFormal((((Type*)$1)->type),($2->value));delete ((Type*)$1);}
+;
+
+Statements:         Statement           										{;}
+                    | Statements Statement  									{;}
+;
+
+Statement:          LBRACE OpenScope Statements CloseScope RBRACE    								{;}
+                    | Type ID SC 											    {DS.addSymbol(($1->type),($2->value));delete ((Type*)$2);}
+                    | Type ID ASSIGN Exp SC  									{DS.compareTypesAssignment((((Type*)$1)->type),(((Expression*)$4)->type));DS.addSymbol(($1->type),($2->value));delete ((Type*)$2);}
+                    | ID ASSIGN Exp SC  										{DS.compareTypesAssignment(DS.getVarType(($1->value)),(((Expression*)$3)->type));}
+                    | Call SC           										{delete ((Expression*)$1);}
+                    | RETURN SC         										{DS.checkFunctionType(TYPE_VOID);}
+                    | RETURN Exp SC     										{DS.checkFunctionType((((Expression*)$2)->type));}
+                    | IF LPAREN Exp RPAREN OpenScope Statement CloseScope                           {DS.checkIfBool((((Expression*)$3)->type));delete ((Expression*)$3);}
+                    | IF LPAREN Exp RPAREN OpenScope Statement CloseScope ELSE OpenScope Statement CloseScope            {DS.checkIfBool((((Expression*)$3)->type));delete ((Expression*)$3);}
+                    | WHILE LPAREN Exp RPAREN OpenScope WhileM Statement CloseScope                  {DS.checkIfBool((((Expression*)$3)->type));delete ((Expression*)$3);DS.exitWhile();}
+                    | BREAK SC          										{if(!(DS.checkInWhile())) {errorUnexpectedBreak(yylineno);}}
+                    | CONTINUE SC       										{if(!(DS.checkInWhile())) {errorUnexpectedContinue(yylineno);}}
+;
+
+WhileM:             /*epsilon*/                                                 {DS.enterWhile();}
+;
+
+Call:               ID LPAREN ExpList RPAREN    								{DS.checkVariables(($1->value),((ExpressionList*)$3));$$=new Expression(DS.getFunctionType(($1->value)));delete ((ExpressionList*)$3);}//check if variables fit called function
+                    | ID LPAREN RPAREN          								{DS.checkVariables(($1->value),nullptr);$$=new Expression(DS.getFunctionType(($1->value)));}//check if function doesn't have variables
+;
+
+ExpList:            Exp                         								{$$=new ExpressionList();((ExpressionList*)$$)->addExpression((Expression*)$1);}
+                    | Exp COMMA ExpList         								{((ExpressionList*)$3)->addExpression((Expression*)$1); $$ = $3;}
+;
+
+Type:               INT                         								{$$ = new Type(TYPE_INT);}
+                    | BYTE                      								{$$ = new Type(TYPE_BYTE);}
+                    | BOOL                      								{$$ = new Type(TYPE_BOOL);}
+;
+
+Exp:                LPAREN Exp RPAREN           								{$$=$2;} 
+                    | Exp MULTIPLICATIVE Exp           						    {($1->type>$3->type)?($$=$1):($$=$3);} // (x = 3 if 4>5 else 2) //x=2//expression should get the bigger type
+                    | Exp ADDITIVE Exp           								{($1->type>$3->type)?($$=$1):($$=$3);} // (x = 3 if 4>5 else 2) //x=2//expression should get the bigger type
+                    | ID                        								{$$ = new Expression(DS.findID(((Node*)$1)->value));} //Expression should get same type as ID
+                    | Call                      								{$$=$1;}
+                    | NUM                       								{$$=new Expression(TYPE_INT);}
+                    | NUM B                     								{$$=new Expression(TYPE_BYTE);}//when does it happen?
+                    | STRING                    								{$$=new Expression(TYPE_STRING);}
+                    | TRUE                      								{$$=new Expression(TYPE_BOOL);}
+                    | FALSE                     								{$$=new Expression(TYPE_BOOL);}
+                    | NOT Exp                   								{$$=$2;}
+                    | Exp AND Exp               								{$$=$1;delete (Expression*)$3;}
+                    | Exp OR Exp                								{$$=$1;delete (Expression*)$3;}
+                    | Exp RELATIONAL Exp             							{DS.compareRelop($1->type,$3->type); $1->type=TYPE_BOOL; $$=$1;delete (Expression*)$3;}
+                    | LPAREN Type RPAREN Exp    								{DS.compareTypesAssignment($2->type,$4->type);$$=new Expression($2->type);delete ((Type*)$2);delete ((Expression*)$4);}//if cast to byte make sure it's not bigger than 256
+                    | Exp IF LPAREN Exp RPAREN ELSE Exp                         {$$=$1;DS.compareTypesAssignment((((Expression*)$1)->type),(((Expression*)$7)->type));DS.checkIfBool((((Expression*)$4)->type));delete ((Expression*)$7);delete ((Expression*)$4);}
+
+;
+
+%%
+
+void yyerror(const char*)											
+{
+    errorSyn(yylineno); exit(1);
+}
+
+int main() 										
+{
+    //add functions print and printi to DS
+	return yyparse();
+}

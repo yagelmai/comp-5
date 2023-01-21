@@ -1,0 +1,7 @@
+
+for file in `ls tests/ | grep in | cut -d"." -f1`; do
+	echo Running test for $file
+	./hw3 < tests/${file}.in > tests/${file}
+	diff tests/$file tests/${file}.out
+	echo \*\*\* DONE \*\*\*
+done
