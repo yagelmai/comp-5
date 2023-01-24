@@ -3,10 +3,13 @@
 #include <vector>
 #include <string>
 #include <list>
+#include <stack>
+#include "bp.hpp"
 extern int yylineno;
 using namespace std;
 #define YYSTYPE Node*
 #include <iostream>
+
 enum Types
 {
     TYPE_UNDEFINED,
@@ -21,6 +24,14 @@ enum Types
 class Node
 {
 public:
+    //added
+    vector<pair<int,BranchLabelIndex>> next_list;
+    vector<pair<int,BranchLabelIndex>> true_list;
+    vector<pair<int,BranchLabelIndex>> false_list;
+    vector<pair<int,BranchLabelIndex>> continue_list;
+    vector<pair<int,BranchLabelIndex>> break_list;
+    string reg;
+    string expression_label_specific;
     std::string value;
     Types type;
     Node(){};
@@ -170,6 +181,30 @@ public:
         return this->symbols;
     }
 };
+
+//added
+struct CaseDecl : public Node{
+    int case_value;
+    string quad_label; // to here we jump if the case is correct
+
+    CaseDecl(int case_val, const string& quad_lbl) : case_value(case_val), quad_label(quad_lbl){}
+
+};
+
+struct CaseList : public Node{
+    stack<CaseDecl*> case_list;
+    bool has_default;
+
+    CaseList(CaseDecl* case_decl, bool has_default){
+        case_list.push(case_decl); // in here we save the quads and values of each one. it's a stack.
+        this->has_default = has_default;
+    }
+
+    void addCase(CaseDecl* case_decl){
+        case_list.push(case_decl);
+    }
+};
+
 
 
 #endif //_PARSER_H
