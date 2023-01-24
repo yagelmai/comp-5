@@ -7,6 +7,7 @@
 #include <stack>
 #include "parser.hpp"
 #include "hw3_output.hpp"
+#include "TableHandler.hpp"
 #include <iostream>
 
 using namespace std;

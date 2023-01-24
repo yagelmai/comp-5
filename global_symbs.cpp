@@ -2,6 +2,13 @@
 #include "hw3_output.hpp"
 #include <iterator>
 
+//added
+stack<size_t> offsets;
+vector<vector<TableEntry*>> maps_v2;
+bool isMainDefined = false;
+Types currentRetType;
+//
+
 GlobalSymbs::GlobalSymbs()
 {
     symbolTables = std::list<InnerSymbs>();

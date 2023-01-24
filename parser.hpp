@@ -32,6 +32,7 @@ public:
     vector<pair<int,BranchLabelIndex>> break_list;
     string reg;
     string expression_label_specific;
+    //
     std::string value;
     Types type;
     Node(){};
@@ -204,7 +205,7 @@ struct CaseList : public Node{
         case_list.push(case_decl);
     }
 };
-
+//
 
 
 #endif //_PARSER_H

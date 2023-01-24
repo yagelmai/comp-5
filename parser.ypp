@@ -6,6 +6,7 @@
 
     #include "global_symbs.hpp"         // all actions and the DS
     #include "hw3_output.hpp"
+    #include "trans_llvm.hpp"
 
     using namespace output;
 	int yylex();
@@ -89,7 +90,16 @@ Statements:         Statement           										{;}
 ;
 
 Statement:          LBRACE OpenScope Statements CloseScope RBRACE    								{;}
-                    | Type ID SC 											    {DS.addSymbol(($1->type),($2->value));delete ((Type*)$2);}
+                    | Type ID SC 											    
+                    {
+                        DS.addSymbol(($1->type),($2->value));
+                        delete ((Type*)$2);
+                        //added
+                        string new_var_reg = genReg();
+			            create_new_variable(GetFromTable(((Id*)$2)->value)->offset);
+			            $$ = new Node();
+                        //
+                        }
                     | Type ID ASSIGN Exp SC  									{DS.compareTypesAssignment((((Type*)$1)->type),(((Expression*)$4)->type));DS.addSymbol(($1->type),($2->value));delete ((Type*)$2);}
                     | ID ASSIGN Exp SC  										{DS.compareTypesAssignment(DS.getVarType(($1->value)),(((Expression*)$3)->type));}
                     | Call SC           										{delete ((Expression*)$1);}

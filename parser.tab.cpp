@@ -141,6 +141,7 @@
 
     #include "global_symbs.hpp"         // all actions and the DS
     #include "hw3_output.hpp"
+    #include "trans_llvm.hpp"
 
     using namespace output;
 	int yylex();
@@ -181,7 +182,7 @@ typedef int YYSTYPE;
 
 
 /* Line 216 of yacc.c.  */
-#line 185 "parser.tab.cpp"
+#line 186 "parser.tab.cpp"
 
 #ifdef short
 # undef short
@@ -488,12 +489,12 @@ static const yytype_int8 yyrhs[] =
 /* YYRLINE[YYN] -- source line where rule number YYN was defined.  */
 static const yytype_uint8 yyrline[] =
 {
-       0,    54,    54,    57,    62,    63,    66,    68,    70,    72,
-      73,    76,    77,    80,    81,    84,    87,    88,    91,    92,
-      93,    94,    95,    96,    97,    98,    99,   100,   101,   102,
-     105,   108,   109,   112,   113,   116,   117,   118,   121,   122,
-     123,   124,   125,   126,   127,   128,   129,   130,   131,   132,
-     133,   134,   135,   136
+       0,    55,    55,    58,    63,    64,    67,    69,    71,    73,
+      74,    77,    78,    81,    82,    85,    88,    89,    92,    93,
+     103,   104,   105,   106,   107,   108,   109,   110,   111,   112,
+     115,   118,   119,   122,   123,   126,   127,   128,   131,   132,
+     133,   134,   135,   136,   137,   138,   139,   140,   141,   142,
+     143,   144,   145,   146
 };
 #endif
 
@@ -1488,12 +1489,12 @@ yyreduce:
   switch (yyn)
     {
         case 2:
-#line 54 "parser.ypp"
+#line 55 "parser.ypp"
     {DS.printFunctions();;}
     break;
 
   case 3:
-#line 57 "parser.ypp"
+#line 58 "parser.ypp"
     {    Symbol new_s("value", TYPE_STRING, false,-1);
                                                                                      Symbol new_s2("value", TYPE_INT, false,-1);
                                                                                      DS.current_function_parameters.emplace_back(new_s);DS.addFunction("print", TYPE_VOID);DS.clearFormals();
@@ -1501,258 +1502,266 @@ yyreduce:
     break;
 
   case 4:
-#line 62 "parser.ypp"
-    {;}
-    break;
-
-  case 5:
 #line 63 "parser.ypp"
     {;}
     break;
 
+  case 5:
+#line 64 "parser.ypp"
+    {;}
+    break;
+
   case 6:
-#line 66 "parser.ypp"
+#line 67 "parser.ypp"
     {DS.addFunction(((yyvsp[(2) - (10)])->value), DS.current_function_type);DS.clearFormals();;}
     break;
 
   case 7:
-#line 68 "parser.ypp"
+#line 69 "parser.ypp"
     {DS.openScope();;}
     break;
 
   case 8:
-#line 70 "parser.ypp"
+#line 71 "parser.ypp"
     {output::endScope();DS.closeScope();;}
     break;
 
   case 9:
-#line 72 "parser.ypp"
+#line 73 "parser.ypp"
     {DS.currentFunctionType((yyvsp[(1) - (1)])->type);;}
     break;
 
   case 10:
-#line 73 "parser.ypp"
+#line 74 "parser.ypp"
     {DS.currentFunctionType(TYPE_VOID);;}
     break;
 
   case 11:
-#line 76 "parser.ypp"
+#line 77 "parser.ypp"
     {(yyval) = new Formals((FormalsList*)(yyvsp[(1) - (1)]));;}
     break;
 
   case 12:
-#line 77 "parser.ypp"
+#line 78 "parser.ypp"
     {(yyval) = new Formals();;}
     break;
 
   case 13:
-#line 80 "parser.ypp"
+#line 81 "parser.ypp"
     {(yyval) = new FormalsList((FormalDecl*)(yyvsp[(1) - (1)]));;}
     break;
 
   case 14:
-#line 81 "parser.ypp"
+#line 82 "parser.ypp"
     {(yyval) = new FormalsList((FormalDecl*)(yyvsp[(1) - (3)]), (FormalsList*)(yyvsp[(3) - (3)]));;}
     break;
 
   case 15:
-#line 84 "parser.ypp"
+#line 85 "parser.ypp"
     {DS.addFormal((((Type*)(yyvsp[(1) - (2)]))->type),((yyvsp[(2) - (2)])->value));delete ((Type*)(yyvsp[(1) - (2)]));;}
     break;
 
   case 16:
-#line 87 "parser.ypp"
-    {;;}
-    break;
-
-  case 17:
 #line 88 "parser.ypp"
     {;;}
     break;
 
+  case 17:
+#line 89 "parser.ypp"
+    {;;}
+    break;
+
   case 18:
-#line 91 "parser.ypp"
+#line 92 "parser.ypp"
     {;;}
     break;
 
   case 19:
-#line 92 "parser.ypp"
-    {DS.addSymbol(((yyvsp[(1) - (3)])->type),((yyvsp[(2) - (3)])->value));delete ((Type*)(yyvsp[(2) - (3)]));;}
+#line 94 "parser.ypp"
+    {
+                        DS.addSymbol(((yyvsp[(1) - (3)])->type),((yyvsp[(2) - (3)])->value));
+                        delete ((Type*)(yyvsp[(2) - (3)]));
+                        //added
+                        string new_var_reg = genReg();
+			            create_new_variable(GetFromTable(((Id*)(yyvsp[(2) - (3)]))->value)->offset);
+			            (yyval) = new Node();
+                        //
+                        ;}
     break;
 
   case 20:
-#line 93 "parser.ypp"
+#line 103 "parser.ypp"
     {DS.compareTypesAssignment((((Type*)(yyvsp[(1) - (5)]))->type),(((Expression*)(yyvsp[(4) - (5)]))->type));DS.addSymbol(((yyvsp[(1) - (5)])->type),((yyvsp[(2) - (5)])->value));delete ((Type*)(yyvsp[(2) - (5)]));;}
     break;
 
   case 21:
-#line 94 "parser.ypp"
+#line 104 "parser.ypp"
     {DS.compareTypesAssignment(DS.getVarType(((yyvsp[(1) - (4)])->value)),(((Expression*)(yyvsp[(3) - (4)]))->type));;}
     break;
 
   case 22:
-#line 95 "parser.ypp"
+#line 105 "parser.ypp"
     {delete ((Expression*)(yyvsp[(1) - (2)]));;}
     break;
 
   case 23:
-#line 96 "parser.ypp"
+#line 106 "parser.ypp"
     {DS.checkFunctionType(TYPE_VOID);;}
     break;
 
   case 24:
-#line 97 "parser.ypp"
+#line 107 "parser.ypp"
     {DS.checkFunctionType((((Expression*)(yyvsp[(2) - (3)]))->type));;}
     break;
 
   case 25:
-#line 98 "parser.ypp"
+#line 108 "parser.ypp"
     {DS.checkIfBool((((Expression*)(yyvsp[(3) - (7)]))->type));delete ((Expression*)(yyvsp[(3) - (7)]));;}
     break;
 
   case 26:
-#line 99 "parser.ypp"
+#line 109 "parser.ypp"
     {DS.checkIfBool((((Expression*)(yyvsp[(3) - (11)]))->type));delete ((Expression*)(yyvsp[(3) - (11)]));;}
     break;
 
   case 27:
-#line 100 "parser.ypp"
+#line 110 "parser.ypp"
     {DS.checkIfBool((((Expression*)(yyvsp[(3) - (8)]))->type));delete ((Expression*)(yyvsp[(3) - (8)]));DS.exitWhile();;}
     break;
 
   case 28:
-#line 101 "parser.ypp"
+#line 111 "parser.ypp"
     {if(!(DS.checkInWhile())) {errorUnexpectedBreak(yylineno);};}
     break;
 
   case 29:
-#line 102 "parser.ypp"
+#line 112 "parser.ypp"
     {if(!(DS.checkInWhile())) {errorUnexpectedContinue(yylineno);};}
     break;
 
   case 30:
-#line 105 "parser.ypp"
+#line 115 "parser.ypp"
     {DS.enterWhile();;}
     break;
 
   case 31:
-#line 108 "parser.ypp"
+#line 118 "parser.ypp"
     {DS.checkVariables(((yyvsp[(1) - (4)])->value),((ExpressionList*)(yyvsp[(3) - (4)])));(yyval)=new Expression(DS.getFunctionType(((yyvsp[(1) - (4)])->value)));delete ((ExpressionList*)(yyvsp[(3) - (4)]));;}
     break;
 
   case 32:
-#line 109 "parser.ypp"
+#line 119 "parser.ypp"
     {DS.checkVariables(((yyvsp[(1) - (3)])->value),nullptr);(yyval)=new Expression(DS.getFunctionType(((yyvsp[(1) - (3)])->value)));;}
     break;
 
   case 33:
-#line 112 "parser.ypp"
+#line 122 "parser.ypp"
     {(yyval)=new ExpressionList();((ExpressionList*)(yyval))->addExpression((Expression*)(yyvsp[(1) - (1)]));;}
     break;
 
   case 34:
-#line 113 "parser.ypp"
+#line 123 "parser.ypp"
     {((ExpressionList*)(yyvsp[(3) - (3)]))->addExpression((Expression*)(yyvsp[(1) - (3)])); (yyval) = (yyvsp[(3) - (3)]);;}
     break;
 
   case 35:
-#line 116 "parser.ypp"
+#line 126 "parser.ypp"
     {(yyval) = new Type(TYPE_INT);;}
     break;
 
   case 36:
-#line 117 "parser.ypp"
+#line 127 "parser.ypp"
     {(yyval) = new Type(TYPE_BYTE);;}
     break;
 
   case 37:
-#line 118 "parser.ypp"
+#line 128 "parser.ypp"
     {(yyval) = new Type(TYPE_BOOL);;}
     break;
 
   case 38:
-#line 121 "parser.ypp"
+#line 131 "parser.ypp"
     {(yyval)=(yyvsp[(2) - (3)]);;}
     break;
 
   case 39:
-#line 122 "parser.ypp"
+#line 132 "parser.ypp"
     {((yyvsp[(1) - (3)])->type>(yyvsp[(3) - (3)])->type)?((yyval)=(yyvsp[(1) - (3)])):((yyval)=(yyvsp[(3) - (3)]));;}
     break;
 
   case 40:
-#line 123 "parser.ypp"
+#line 133 "parser.ypp"
     {((yyvsp[(1) - (3)])->type>(yyvsp[(3) - (3)])->type)?((yyval)=(yyvsp[(1) - (3)])):((yyval)=(yyvsp[(3) - (3)]));;}
     break;
 
   case 41:
-#line 124 "parser.ypp"
+#line 134 "parser.ypp"
     {(yyval) = new Expression(DS.findID(((Node*)(yyvsp[(1) - (1)]))->value));;}
     break;
 
   case 42:
-#line 125 "parser.ypp"
+#line 135 "parser.ypp"
     {(yyval)=(yyvsp[(1) - (1)]);;}
     break;
 
   case 43:
-#line 126 "parser.ypp"
+#line 136 "parser.ypp"
     {(yyval)=new Expression(TYPE_INT);;}
     break;
 
   case 44:
-#line 127 "parser.ypp"
+#line 137 "parser.ypp"
     {(yyval)=new Expression(TYPE_BYTE);;}
     break;
 
   case 45:
-#line 128 "parser.ypp"
+#line 138 "parser.ypp"
     {(yyval)=new Expression(TYPE_STRING);;}
     break;
 
   case 46:
-#line 129 "parser.ypp"
+#line 139 "parser.ypp"
     {(yyval)=new Expression(TYPE_BOOL);;}
     break;
 
   case 47:
-#line 130 "parser.ypp"
+#line 140 "parser.ypp"
     {(yyval)=new Expression(TYPE_BOOL);;}
     break;
 
   case 48:
-#line 131 "parser.ypp"
+#line 141 "parser.ypp"
     {(yyval)=(yyvsp[(2) - (2)]);;}
     break;
 
   case 49:
-#line 132 "parser.ypp"
+#line 142 "parser.ypp"
     {(yyval)=(yyvsp[(1) - (3)]);delete (Expression*)(yyvsp[(3) - (3)]);;}
     break;
 
   case 50:
-#line 133 "parser.ypp"
+#line 143 "parser.ypp"
     {(yyval)=(yyvsp[(1) - (3)]);delete (Expression*)(yyvsp[(3) - (3)]);;}
     break;
 
   case 51:
-#line 134 "parser.ypp"
+#line 144 "parser.ypp"
     {DS.compareRelop((yyvsp[(1) - (3)])->type,(yyvsp[(3) - (3)])->type); (yyvsp[(1) - (3)])->type=TYPE_BOOL; (yyval)=(yyvsp[(1) - (3)]);delete (Expression*)(yyvsp[(3) - (3)]);;}
     break;
 
   case 52:
-#line 135 "parser.ypp"
+#line 145 "parser.ypp"
     {DS.compareTypesAssignment((yyvsp[(2) - (4)])->type,(yyvsp[(4) - (4)])->type);(yyval)=new Expression((yyvsp[(2) - (4)])->type);delete ((Type*)(yyvsp[(2) - (4)]));delete ((Expression*)(yyvsp[(4) - (4)]));;}
     break;
 
   case 53:
-#line 136 "parser.ypp"
+#line 146 "parser.ypp"
     {(yyval)=(yyvsp[(1) - (7)]);DS.compareTypesAssignment((((Expression*)(yyvsp[(1) - (7)]))->type),(((Expression*)(yyvsp[(7) - (7)]))->type));DS.checkIfBool((((Expression*)(yyvsp[(4) - (7)]))->type));delete ((Expression*)(yyvsp[(7) - (7)]));delete ((Expression*)(yyvsp[(4) - (7)]));;}
     break;
 
 
 /* Line 1267 of yacc.c.  */
-#line 1756 "parser.tab.cpp"
+#line 1765 "parser.tab.cpp"
       default: break;
     }
   YY_SYMBOL_PRINT ("-> $$ =", yyr1[yyn], &yyval, &yyloc);
@@ -1966,7 +1975,7 @@ yyreturn:
 }
 
 
-#line 140 "parser.ypp"
+#line 150 "parser.ypp"
 
 
 void yyerror(const char*)											
