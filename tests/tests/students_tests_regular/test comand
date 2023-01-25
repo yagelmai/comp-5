@@ -1,0 +1,3 @@
+test comand:
+//create output
+ for i in {1..74}; do ./hw5 < students_tests_regular/test${i}.in | lli >  students_tests_regular/test${i}.our_out; done 

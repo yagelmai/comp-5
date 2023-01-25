@@ -1583,7 +1583,7 @@ yyreduce:
                         delete ((Type*)(yyvsp[(2) - (3)]));
                         //added
                         string new_var_reg = genReg();
-			            create_new_variable(GetFromTable(((Id*)(yyvsp[(2) - (3)]))->value)->offset);
+			            create_new_variable(GetFromTable(((Id*)(yyvsp[(2) - (3)]))->value, DS.symbolTables)->back().getOffset());
 			            (yyval) = new Node();
                         //
                         ;}
