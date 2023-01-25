@@ -96,7 +96,7 @@ Statement:          LBRACE OpenScope Statements CloseScope RBRACE    								{;}
                         delete ((Type*)$2);
                         //added
                         string new_var_reg = genReg();
-			            create_new_variable(GetFromTable(((Id*)$2)->value)->offset);
+			            create_new_variable(GetFromTable(((Id*)$2)->value, DS.symbolTables)->back().getOffset());
 			            $$ = new Node();
                         //
                         }

@@ -5,6 +5,8 @@
 #include <string>
 #include <list>
 #include <stack>
+#include "bp.hpp"
+#include "trans_llvm.hpp"
 #include "parser.hpp"
 #include "hw3_output.hpp"
 #include "TableHandler.hpp"
@@ -31,13 +33,18 @@ class Symbol
 
 class InnerSymbs
 {
-    list<Symbol> symbols;
-
 public:
+    list<Symbol> symbols;
     InnerSymbs()
     {
         symbols = list<Symbol>();
     };
+    // i added the destroy function for the case we use new Symbols
+    // ~InnerSymbs(){
+    //     for(auto it = symbols.begin(); it != symbols.end(); ++it){
+    //         delete(&it); // Hope this won't crash
+    //     }
+    // }
     void printAllSymbs(){
         while(!symbols.empty()){
             output::printID(symbols.front().name,symbols.front().offset, typeToString(symbols.front().type));
@@ -112,6 +119,24 @@ class GlobalSymbs
         Types getFunctionType(std::string id);
         void printFunctions();
         string typeToString(Types type);
+
+
 };
+
+// myy additions
+list<Symbol>* GetFromTable(string&, std::list<InnerSymbs>  our_maps);
+int InsertVariableToTable(string&, string&, std::list<InnerSymbs>  our_maps);
+int InsertFunctionToTable(string&, Types&, vector<pair<string, string>>&, std::list<InnerSymbs>  our_maps);
+list<Symbol>* GetFunctionFromTable(string&, std::list<InnerSymbs>  our_maps);
+void CollapseTable(std::list<InnerSymbs>  our_maps);
+void PrintDeclaredVariablesFromScope(std::list<InnerSymbs>  our_maps);
+void CreateNewTable(std::list<InnerSymbs>  our_maps);
+void MakeGlobalScope(std::list<InnerSymbs>  our_maps);
+//
+
+
+
+
+
 
 #endif /*GLOB_SYMBS*/
